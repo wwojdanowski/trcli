@@ -170,7 +170,7 @@ func TestItReturnsFalseOnNonExistingPath(t *testing.T) {
 	assert.Equal(t, false, mc.PathExists())
 }
 
-func TestBuildFullPath(t *testing.T) {
+func TestItBuildsFullPath(t *testing.T) {
 	mc := ModulesCache{"/tmp/module/cache/test/path"}
 	defer os.Remove("/tmp/module/cache/test/path")
 
@@ -178,4 +178,14 @@ func TestBuildFullPath(t *testing.T) {
 	mc.BuildFullPath()
 	assert.Equal(t, true, mc.PathExists())
 
+}
+
+func TestItReturnsModulesFile(t *testing.T) {
+	mc := ModulesCache{"/tmp/module/cache/test/path"}
+	assert.Equal(t, "/tmp/module/cache/test/path/modules.json", mc.CacheFile())
+}
+
+func TestItReturnsModulesCacheDir(t *testing.T) {
+	mc := ModulesCache{"/tmp/module/cache/test/path"}
+	assert.Equal(t, "/tmp/module/cache/test/path", mc.CacheDir())
 }

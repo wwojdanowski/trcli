@@ -4,46 +4,19 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/briandowns/spinner"
+	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/briandowns/spinner"
-	"github.com/spf13/cobra"
 )
 
 const REGISTRY_URL = "https://registry.terraform.io/v1/modules"
 
-type Module struct {
-	ID              string `json:"id"`
-	Owner           string `json:"owner"`
-	Namespace       string `json:"namespace"`
-	Name            string `json:"name"`
-	Version         string `json:"version"`
-	Provider        string `json:"provider"`
-	ProviderLogoURL string `json:"provider_logo_url"`
-	Description     string `json:"description"`
-	Source          string `json:"source"`
-	Tag             string `json:"tag"`
-	PublishedAt     string `json:"published_at"`
-	Downloads       int    `json:"downloads"`
-	Verified        bool   `json:"verified"`
-}
-
-type ModulesInfo struct {
-	Meta struct {
-		Limit         int    `json:"limit"`
-		CurrentOffset int    `json:"current_offset"`
-		NextOffset    int    `json:"next_offset"`
-		NextURL       string `json:"next_url"`
-	} `json:"meta"`
-	Modules []Module `json:"modules"`
-}
-
-func loopThroughModules() {
+func loopThroughModules(modulesPath string) {
 	offset := 0
 	limit := 100
 
@@ -59,7 +32,7 @@ func loopThroughModules() {
 		modulesInfo := ModulesInfo{}
 		_ = json.Unmarshal([]byte(responseBody), &modulesInfo)
 		//printAllModules(&modulesInfo)
-		storeAllModules(&modulesInfo)
+		storeAllModules(modulesPath, &modulesInfo)
 		shouldContinue = modulesInfo.Meta.NextOffset > 0
 		offset = modulesInfo.Meta.NextOffset
 
@@ -72,8 +45,7 @@ func printAllModules(modulesInfo *ModulesInfo) {
 	}
 }
 
-func storeAllModules(modulesInfo *ModulesInfo) {
-	modulesFile := resolveModulesFile()
+func storeAllModules(modulesFile string, modulesInfo *ModulesInfo) {
 	for i := 0; i < len(modulesInfo.Modules); i++ {
 		storeModuleData(&modulesInfo.Modules[i], modulesFile)
 	}
@@ -101,7 +73,9 @@ func main() {
 		Short: "Print anything to the console",
 		Long:  `A CLI application for searching terraform modules`,
 		Args:  cobra.MinimumNArgs(1),
-		Run:   processSearchCommand,
+		Run: func(cmd *cobra.Command, args []string) {
+			processSearchCommand(args[0])
+		},
 	}
 
 	var rootCmd = &cobra.Command{Use: "app"}
@@ -114,34 +88,25 @@ func patternMatchesModuleMetadata(pattern string, module *Module) bool {
 	return strings.Contains(module.Name, pattern) || strings.Contains(module.Description, pattern)
 }
 
-func resolveModulesFile() string {
-	cacheDir, _ := os.UserCacheDir()
-	return fmt.Sprintf("%s/trcli/modules.json", cacheDir)
-}
-
 func resolveModulesDir() string {
 	cacheDir, _ := os.UserCacheDir()
 	return fmt.Sprintf("%s/trcli", cacheDir)
 }
 
-func processSearchCommand(cmd *cobra.Command, args []string) {
-	modulesDataFile := resolveModulesFile()
+func processSearchCommand(pattern string) {
+	mc := ModulesCache{resolveModulesDir()}
 
-	_, error := os.Stat(modulesDataFile)
-
-	if error != nil {
-		os.Mkdir(resolveModulesDir(), 0755)
-		os.Create(modulesDataFile)
+	if !mc.PathExists() {
+		mc.BuildFullPath()
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
-		loopThroughModules()
+		loopThroughModules(mc.CacheFile())
 		s.Stop()
 
 	}
 
-	modules := loadModules(modulesDataFile)
+	modules := loadModules(mc.CacheFile())
 
-	pattern := args[0]
 	fmt.Println()
 	for _, module := range modules {
 		if patternMatchesModuleMetadata(pattern, &module) {
