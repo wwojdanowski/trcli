@@ -153,3 +153,29 @@ func filterModulesByPattern(pattern string, modules []Module) []Module {
 func writeStringNewLine(data string, file *os.File) {
 	file.WriteString(fmt.Sprintf("%s\n", data))
 }
+
+func TestItReturnsTrueOnExistingPath(t *testing.T) {
+	file, err := os.CreateTemp("", "tmpfile-")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	mc := ModulesCache{file.Name()}
+	assert.Equal(t, true, mc.PathExists())
+}
+
+func TestItReturnsFalseOnNonExistingPath(t *testing.T) {
+	mc := ModulesCache{"/tmp/fake/unknown/path"}
+
+	assert.Equal(t, false, mc.PathExists())
+}
+
+func TestBuildFullPath(t *testing.T) {
+	mc := ModulesCache{"/tmp/module/cache/test/path"}
+	defer os.Remove("/tmp/module/cache/test/path")
+
+	assert.Equal(t, false, mc.PathExists())
+	mc.BuildFullPath()
+	assert.Equal(t, true, mc.PathExists())
+
+}
