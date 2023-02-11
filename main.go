@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"github.com/briandowns/spinner"
@@ -68,7 +67,7 @@ func storeModuleData(module *Module, fileName string) {
 }
 
 func main() {
-	var cmdPrint = &cobra.Command{
+	var cmdSearch = &cobra.Command{
 		Use:   "search [search in module name or description]",
 		Short: "Print anything to the console",
 		Long:  `A CLI application for searching terraform modules`,
@@ -78,8 +77,19 @@ func main() {
 		},
 	}
 
+	var cmdInfo = &cobra.Command{
+		Use:   "info [display module details]",
+		Short: "Print anything to the console",
+		Long:  `A CLI application for searching terraform modules`,
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			processInfoCommand(strings.TrimRight(args[0], "\n"))
+		},
+	}
+
 	var rootCmd = &cobra.Command{Use: "app"}
-	rootCmd.AddCommand(cmdPrint)
+	rootCmd.AddCommand(cmdSearch)
+	rootCmd.AddCommand(cmdInfo)
 	rootCmd.Execute()
 
 }
@@ -91,6 +101,16 @@ func patternMatchesModuleMetadata(pattern string, module *Module) bool {
 func resolveModulesDir() string {
 	cacheDir, _ := os.UserCacheDir()
 	return fmt.Sprintf("%s/trcli", cacheDir)
+}
+
+func processInfoCommand(moduleName string) {
+	mc := ModulesCache{resolveModulesDir()}
+	module := mc.Find(moduleName)
+	if module == nil {
+		fmt.Printf("Module '%s' not found\n", moduleName)
+		return
+	}
+	printModuleDetail(module)
 }
 
 func processSearchCommand(pattern string) {
@@ -113,31 +133,6 @@ func processSearchCommand(pattern string) {
 			fmt.Printf("%s - %s\n", module.Name, module.Description)
 		}
 	}
-}
-
-func loadModules(fileName string) []Module {
-
-	var modules []Module
-
-	f, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
-
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	fileScanner := bufio.NewScanner(f)
-	fileScanner.Split(bufio.ScanLines)
-
-	for fileScanner.Scan() {
-		var module Module
-		data := fileScanner.Text()
-		json.Unmarshal([]byte(data), &module)
-		modules = append(modules, module)
-	}
-
-	return modules
-
 }
 
 func filterModules() {

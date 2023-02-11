@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -52,11 +53,7 @@ func TestModuleIsSavedToDataFile(t *testing.T) {
 }
 
 func TestModulesAreLoadedFromFile(t *testing.T) {
-	file, err := os.CreateTemp("", "tmpfile-")
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	fileName := makeFakeModulesFile()
 
 	expected := []Module{
 		{
@@ -91,14 +88,29 @@ func TestModulesAreLoadedFromFile(t *testing.T) {
 		},
 	}
 
-	writeStringNewLine(`{"id":"id1","owner":"owner1","namespace":"namespace1","name":"package1","version":"1.0.0","provider":"provider1","provider_logo_url":"http://unknown.com/img1.jpg","description":"test module","source":"http://github.com/test_module","tag":"tag1","published_at":"12:00:00","downloads":10,"verified":true}`, file)
-	writeStringNewLine(`{"id":"id2","owner":"owner2","namespace":"namespace2","name":"package2","version":"2.0.0","provider":"provider2","provider_logo_url":"http://unknown.com/img2.jpg","description":"test module","source":"http://github.com/test_module","tag":"tag2","published_at":"13:00:00","downloads":20,"verified":false}`, file)
-	file.Close()
-
-	modules := loadModules(file.Name())
+	modules := loadModules(fileName)
 
 	assert.Len(t, modules, 2)
 	assert.Equal(t, expected, modules)
+}
+
+func makeFakeModulesFile() string {
+	dir, err := os.MkdirTemp("", "modules_test")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.OpenFile(fmt.Sprintf("%s/modules.json", dir), os.O_CREATE|os.O_WRONLY, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	writeStringNewLine(`{"id":"id1","owner":"owner1","namespace":"namespace1","name":"package1","version":"1.0.0","provider":"provider1","provider_logo_url":"http://unknown.com/img1.jpg","description":"test module","source":"http://github.com/test_module","tag":"tag1","published_at":"12:00:00","downloads":10,"verified":true}`, file)
+	writeStringNewLine(`{"id":"id2","owner":"owner2","namespace":"namespace2","name":"package2","version":"2.0.0","provider":"provider2","provider_logo_url":"http://unknown.com/img2.jpg","description":"test module","source":"http://github.com/test_module","tag":"tag2","published_at":"13:00:00","downloads":20,"verified":false}`, file)
+	file.Close()
+	return file.Name()
 }
 
 func TestPatternMatchesModuleMetadata(t *testing.T) {
@@ -188,4 +200,32 @@ func TestItReturnsModulesFile(t *testing.T) {
 func TestItReturnsModulesCacheDir(t *testing.T) {
 	mc := ModulesCache{"/tmp/module/cache/test/path"}
 	assert.Equal(t, "/tmp/module/cache/test/path", mc.CacheDir())
+}
+
+func TestItFindsExistingModule(t *testing.T) {
+	mc := ModulesCache{filepath.Dir(makeFakeModulesFile())}
+	expected := Module{
+		ID:              "id1",
+		Owner:           "owner1",
+		Namespace:       "namespace1",
+		Name:            "package1",
+		Version:         "1.0.0",
+		Provider:        "provider1",
+		ProviderLogoURL: "http://unknown.com/img1.jpg",
+		Description:     "test module",
+		Source:          "http://github.com/test_module",
+		Tag:             "tag1",
+		PublishedAt:     "12:00:00",
+		Downloads:       10,
+		Verified:        true,
+	}
+
+	found := mc.Find("package1")
+	assert.Equal(t, expected, *found)
+}
+
+func TestItReturnsNilOnMissedSearch(t *testing.T) {
+	mc := ModulesCache{filepath.Dir(makeFakeModulesFile())}
+	found := mc.Find("package3")
+	assert.Equal(t, (*Module)(nil), found)
 }
