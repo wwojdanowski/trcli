@@ -1,0 +1,27 @@
+package main
+
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
+func TestModuleOutputIsProperlyFormatted(t *testing.T) {
+	module := Module{
+		ID:              "id1",
+		Owner:           "owner1",
+		Namespace:       "namespace1",
+		Name:            "package1",
+		Version:         "1.0.0",
+		Provider:        "provider1",
+		ProviderLogoURL: "http://unknown.com/img1.jpg",
+		Description:     "test module",
+		Source:          "http://github.com/test_module",
+		Tag:             "tag1",
+		PublishedAt:     "12:00:00",
+		Downloads:       10,
+		Verified:        true,
+	}
+	outputString := formatModuleOutput(&module)
+
+	assert.Equal(t, "package1 (id1) - test module", outputString)
+}

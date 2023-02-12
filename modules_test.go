@@ -46,7 +46,6 @@ func TestModuleIsSavedToDataFile(t *testing.T) {
 
 	expected := `{"id":"id1","owner":"owner1","namespace":"namespace1","name":"package1","version":"1.0.0","provider":"provider1","provider_logo_url":"http://unknown.com/img1.jpg","description":"test module","source":"http://github.com/test_module","tag":"tag1","published_at":"12:00:00","downloads":10,"verified":true}`
 	actual := strings.SplitN(string(data), "\n", 2)[0]
-	fmt.Println(actual)
 	os.Remove(file.Name())
 
 	assert.Equal(t, expected, actual)

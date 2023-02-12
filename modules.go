@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 )
@@ -91,10 +90,4 @@ func (mc *ModulesCache) Find(packageName string) *Module {
 		}
 	}
 	return nil
-}
-
-func printModuleDetail(module *Module) {
-	fmt.Printf("Name: %s\n", module.Name)
-	fmt.Printf("Description: %s\n", module.Description)
-	fmt.Printf("ID: %s\n", module.ID)
 }
