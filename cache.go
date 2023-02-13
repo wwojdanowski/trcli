@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,31 +11,40 @@ import (
 
 const REGISTRY_URL = "https://registry.terraform.io/v1/modules"
 
-func loopThroughModules(modulesPath string) {
+type RegistryBrowser struct {
+	registryUrl string
+	limit       int
+	modulesPath string
+}
+
+func (rb *RegistryBrowser) fetch(offset int) *ModulesInfo {
+	response, err := http.Get(fmt.Sprintf("%s?limit=%d&offset=%d", rb.registryUrl, rb.limit, offset))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer response.Body.Close()
+	responseBody, _ := io.ReadAll(response.Body)
+	modulesInfo := ModulesInfo{}
+	_ = json.Unmarshal(responseBody, &modulesInfo)
+	return &modulesInfo
+}
+
+func (rb *RegistryBrowser) LoopThroughModules() {
 	offset := 0
-	limit := 100
 
 	shouldContinue := true
 
 	for i := 0; shouldContinue; i++ {
-		response, err := http.Get(fmt.Sprintf("%s?limit=%d&offset=%d", REGISTRY_URL, limit, offset))
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer response.Body.Close()
-		responseBody, _ := ioutil.ReadAll(response.Body)
-		modulesInfo := ModulesInfo{}
-		_ = json.Unmarshal([]byte(responseBody), &modulesInfo)
-		storeAllModules(modulesPath, &modulesInfo)
+		modulesInfo := rb.fetch(offset)
+		rb.storeAllModules(modulesInfo)
 		shouldContinue = modulesInfo.Meta.NextOffset > 0
 		offset = modulesInfo.Meta.NextOffset
-
 	}
 }
 
-func storeAllModules(modulesFile string, modulesInfo *ModulesInfo) {
+func (rb *RegistryBrowser) storeAllModules(modulesInfo *ModulesInfo) {
 	for i := 0; i < len(modulesInfo.Modules); i++ {
-		storeModuleData(&modulesInfo.Modules[i], modulesFile)
+		storeModuleData(&modulesInfo.Modules[i], rb.modulesPath)
 	}
 }
 
