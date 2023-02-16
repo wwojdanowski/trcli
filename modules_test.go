@@ -36,7 +36,7 @@ func TestModuleIsSavedToDataFile(t *testing.T) {
 	}
 	file.Close()
 
-	storeModuleData(&module, file.Name())
+	(&SimpleModuleWriter{}).storeModuleData(&module, file.Name())
 
 	data, err := ioutil.ReadFile(file.Name())
 

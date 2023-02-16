@@ -56,6 +56,8 @@ func processInfoCommand(moduleName string) {
 	printModuleInfo(module)
 }
 
+const REGISTRY_URL = "https://registry.terraform.io/v1/modules"
+
 func processSearchCommand(pattern string) {
 	mc := ModulesCache{resolveModulesDir()}
 
@@ -63,7 +65,11 @@ func processSearchCommand(pattern string) {
 		mc.BuildFullPath()
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
-		loopThroughModules(mc.CacheFile())
+		browser := RegistryBrowser{REGISTRY_URL,
+			100, mc.CacheFile(),
+			&SimpleModuleFetcher{},
+			&SimpleModuleWriter{}}
+		browser.LoopThroughModules()
 		s.Stop()
 
 	}

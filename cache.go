@@ -9,24 +9,31 @@ import (
 	"os"
 )
 
-const REGISTRY_URL = "https://registry.terraform.io/v1/modules"
+type ModuleFetcher interface {
+	fetch(registryUrl string, limit int, offset int) *ModulesInfo
+}
+
+type ModuleWriter interface {
+	storeAllModules(modulesPath string, modulesInfo *ModulesInfo)
+	storeModuleData(module *Module, fileName string)
+}
+
+type SimpleModuleFetcher struct {
+}
+
+type SimpleModuleWriter struct {
+}
 
 type RegistryBrowser struct {
 	registryUrl string
 	limit       int
 	modulesPath string
+	fetcher     ModuleFetcher
+	writer      ModuleWriter
 }
 
 func (rb *RegistryBrowser) fetch(offset int) *ModulesInfo {
-	response, err := http.Get(fmt.Sprintf("%s?limit=%d&offset=%d", rb.registryUrl, rb.limit, offset))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer response.Body.Close()
-	responseBody, _ := io.ReadAll(response.Body)
-	modulesInfo := ModulesInfo{}
-	_ = json.Unmarshal(responseBody, &modulesInfo)
-	return &modulesInfo
+	return rb.fetcher.fetch(rb.registryUrl, rb.limit, offset)
 }
 
 func (rb *RegistryBrowser) LoopThroughModules() {
@@ -43,12 +50,22 @@ func (rb *RegistryBrowser) LoopThroughModules() {
 }
 
 func (rb *RegistryBrowser) storeAllModules(modulesInfo *ModulesInfo) {
-	for i := 0; i < len(modulesInfo.Modules); i++ {
-		storeModuleData(&modulesInfo.Modules[i], rb.modulesPath)
-	}
+	rb.writer.storeAllModules(rb.modulesPath, modulesInfo)
 }
 
-func storeModuleData(module *Module, fileName string) {
+func (fetcher *SimpleModuleFetcher) fetch(registryUrl string, limit int, offset int) *ModulesInfo {
+	response, err := http.Get(fmt.Sprintf("%s?limit=%d&offset=%d", registryUrl, limit, offset))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer response.Body.Close()
+	responseBody, _ := io.ReadAll(response.Body)
+	modulesInfo := ModulesInfo{}
+	_ = json.Unmarshal(responseBody, &modulesInfo)
+	return &modulesInfo
+}
+
+func (writer *SimpleModuleWriter) storeModuleData(module *Module, fileName string) {
 	data, _ := json.Marshal(module)
 
 	f, err := os.OpenFile(fileName,
@@ -61,5 +78,11 @@ func storeModuleData(module *Module, fileName string) {
 
 	if _, err := f.WriteString(fmt.Sprintf("%s\n", string(data))); err != nil {
 		log.Println(err)
+	}
+}
+
+func (writer *SimpleModuleWriter) storeAllModules(modulesPath string, modulesInfo *ModulesInfo) {
+	for i := 0; i < len(modulesInfo.Modules); i++ {
+		writer.storeModuleData(&modulesInfo.Modules[i], modulesPath)
 	}
 }
