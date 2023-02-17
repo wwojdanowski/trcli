@@ -67,7 +67,7 @@ func processSearchCommand(pattern string) {
 		s.Start()
 		browser := RegistryBrowser{REGISTRY_URL,
 			100, mc.CacheFile(),
-			&SimpleModuleFetcher{},
+			&SimpleModuleFetcher{REGISTRY_URL, 100},
 			&SimpleModuleWriter{}}
 		browser.LoopThroughModules()
 		s.Stop()
