@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 )
@@ -61,13 +63,18 @@ func (mc *ModulesCache) BuildFullPath() {
 }
 
 func loadModules(fileName string) []Module {
-
 	var modules []Module
 
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
 
 	if err != nil {
-		log.Println(err)
+		var pathError *os.PathError
+		if errors.As(pathError, &pathError) {
+			fmt.Println("modules cache doesn't exists, run `trcli update` to get latest content from registry")
+			return nil
+		} else {
+			log.Panicf("Unexpected error %s\n", err)
+		}
 	}
 	defer f.Close()
 
