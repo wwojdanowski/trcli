@@ -19,22 +19,24 @@ type ModuleFetcherIterator interface {
 }
 
 type SimpleModuleFetcherIterator struct {
-	fetcher ModuleFetcher
-	offset  int
-	current *ModulesInfo
+	fetcher     ModuleFetcher
+	nextOffset  int
+	current     *ModulesInfo
+	offsetDelta int
 }
 
 func (it *SimpleModuleFetcherIterator) hasNext() bool {
 	if it.current == nil {
 		return true
 	}
-
 	return it.current.Meta.NextOffset > 0
 }
 
 func (it *SimpleModuleFetcherIterator) next() *ModulesInfo {
 	if it.hasNext() {
-		return it.fetcher.fetch(it.offset)
+		it.current = it.fetcher.fetch(it.nextOffset)
+		it.nextOffset = it.current.Meta.NextOffset
+		return it.current
 	} else {
 		return nil
 	}

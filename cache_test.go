@@ -1,15 +1,23 @@
 package main
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 type ModuleFetcherMock struct {
-	nextOffset int
+	nextOffset   int
+	iteratorMock *ModuleFetcherIteratorMock
 }
 
 func (m *ModuleFetcherMock) fetch(offset int) *ModulesInfo {
+	delta := 3
+	var nextOffset int
 
 	if offset < 7 {
-		m.nextOffset = offset + 3
+		nextOffset = offset + delta
+	} else {
+		nextOffset = 0
 	}
 
 	value := &ModulesInfo{Meta: struct {
@@ -20,7 +28,7 @@ func (m *ModuleFetcherMock) fetch(offset int) *ModulesInfo {
 	}{
 		Limit:         3,
 		CurrentOffset: offset,
-		NextOffset:    m.nextOffset,
+		NextOffset:    nextOffset,
 		NextURL:       "",
 	},
 	}
@@ -28,7 +36,7 @@ func (m *ModuleFetcherMock) fetch(offset int) *ModulesInfo {
 }
 
 func (m *ModuleFetcherMock) iterator() ModuleFetcherIterator {
-	return &ModuleFetcherIteratorMock{count: 0}
+	return m.iteratorMock
 }
 
 type ModuleWriterMock struct {
@@ -56,12 +64,19 @@ func (it *ModuleFetcherIteratorMock) next() *ModulesInfo {
 func TestAllItemsAreExtractedFromRegistryService(t *testing.T) {
 	dummyUrl := "127.0.0.1/registry"
 	modulesPath := "/tmp/modules.json"
-	fetcherMock := &ModuleFetcherMock{}
+	fetcherMock := &ModuleFetcherMock{iteratorMock: &ModuleFetcherIteratorMock{count: 0}}
 	writerMock := &ModuleWriterMock{}
 	rb := RegistryBrowser{dummyUrl,
 		3,
 		modulesPath,
 		fetcherMock, writerMock}
+
+	assert.Equal(t, 0, fetcherMock.iteratorMock.count)
+	assert.Equal(t, true, fetcherMock.iteratorMock.hasNext())
+
 	rb.LoopThroughModules()
+
+	assert.Equal(t, false, fetcherMock.iteratorMock.hasNext())
+	assert.Equal(t, 5, fetcherMock.iteratorMock.count)
 
 }
