@@ -56,3 +56,13 @@ func (writer *SimpleModuleWriter) storeAllModules(modulesPath string, modulesInf
 		writer.storeModuleData(&modulesInfo.Modules[i], modulesPath)
 	}
 }
+
+func RebuildModulesCacheDir(modulesDir string) *ModulesCache {
+	mc := ModulesCache{modulesDir}
+	if !mc.PathExists() {
+		mc.BuildFullPath()
+	} else {
+		mc.DeleteCacheFile()
+	}
+	return &mc
+}

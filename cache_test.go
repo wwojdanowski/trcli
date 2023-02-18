@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 )
 
@@ -67,9 +68,9 @@ func TestAllItemsAreExtractedFromRegistryService(t *testing.T) {
 	fetcherMock := &ModuleFetcherMock{iteratorMock: &ModuleFetcherIteratorMock{count: 0}}
 	writerMock := &ModuleWriterMock{}
 	rb := RegistryBrowser{dummyUrl,
-		3,
 		modulesPath,
-		fetcherMock, writerMock}
+		fetcherMock,
+		writerMock}
 
 	assert.Equal(t, 0, fetcherMock.iteratorMock.count)
 	assert.Equal(t, true, fetcherMock.iteratorMock.hasNext())
@@ -78,5 +79,16 @@ func TestAllItemsAreExtractedFromRegistryService(t *testing.T) {
 
 	assert.Equal(t, false, fetcherMock.iteratorMock.hasNext())
 	assert.Equal(t, 5, fetcherMock.iteratorMock.count)
+}
 
+func TestRebuildModulesCacheDir(t *testing.T) {
+	path, _ := os.MkdirTemp("", "modules_rebuild_cache")
+	path = path + "/additional/subdirectories"
+
+	RebuildModulesCacheDir(path)
+	assert.DirExists(t, path)
+	os.Create(path + "/modules.json")
+
+	RebuildModulesCacheDir(path)
+	assert.NoFileExists(t, path+"/modules.json")
 }

@@ -70,13 +70,9 @@ func processInfoCommand(moduleName string) {
 }
 
 func processUpdateCommand() {
-	mc := ModulesCache{resolveModulesDir()}
-
-	if !mc.PathExists() {
-		mc.BuildFullPath()
-	}
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Start()
+	mc := RebuildModulesCacheDir(resolveModulesDir())
 	browser := RegistryBrowser{REGISTRY_URL, mc.CacheFile(),
 		&SimpleModuleFetcher{REGISTRY_URL, 100},
 		&SimpleModuleWriter{}}

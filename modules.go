@@ -52,6 +52,10 @@ func (mc *ModulesCache) CacheFile() string {
 	return mc.path + "/modules.json"
 }
 
+func (mc *ModulesCache) DeleteCacheFile() {
+	os.Remove(mc.path + "/modules.json")
+}
+
 func (mc *ModulesCache) BuildFullPath() {
 	os.MkdirAll(mc.path, 0755)
 }
