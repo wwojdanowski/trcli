@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const REGISTRY_URL = "https://registry.terraform.io/v1/modules"
+
 func main() {
 	var cmdSearch = &cobra.Command{
 		Use:   "search [search in module name or description]",
@@ -30,9 +32,20 @@ func main() {
 		},
 	}
 
+	var cmdUpdate = &cobra.Command{
+		Use:   "update [update modules cache]",
+		Short: "Print anything to the console",
+		Long:  `A CLI application for searching terraform modules`,
+		Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			processUpdateCommand()
+		},
+	}
+
 	var rootCmd = &cobra.Command{Use: "app"}
 	rootCmd.AddCommand(cmdSearch)
 	rootCmd.AddCommand(cmdInfo)
+	rootCmd.AddCommand(cmdUpdate)
 	rootCmd.Execute()
 
 }
@@ -56,23 +69,23 @@ func processInfoCommand(moduleName string) {
 	printModuleInfo(module)
 }
 
-const REGISTRY_URL = "https://registry.terraform.io/v1/modules"
-
-func processSearchCommand(pattern string) {
+func processUpdateCommand() {
 	mc := ModulesCache{resolveModulesDir()}
 
 	if !mc.PathExists() {
 		mc.BuildFullPath()
-		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		s.Start()
-		browser := RegistryBrowser{REGISTRY_URL,
-			100, mc.CacheFile(),
-			&SimpleModuleFetcher{REGISTRY_URL, 100},
-			&SimpleModuleWriter{}}
-		browser.LoopThroughModules()
-		s.Stop()
-
 	}
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
+	browser := RegistryBrowser{REGISTRY_URL, mc.CacheFile(),
+		&SimpleModuleFetcher{REGISTRY_URL, 100},
+		&SimpleModuleWriter{}}
+	browser.LoopThroughModules()
+	s.Stop()
+}
+
+func processSearchCommand(pattern string) {
+	mc := ModulesCache{resolveModulesDir()}
 
 	modules := loadModules(mc.CacheFile())
 

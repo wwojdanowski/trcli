@@ -17,7 +17,6 @@ type SimpleModuleWriter struct {
 
 type RegistryBrowser struct {
 	registryUrl string
-	limit       int
 	modulesPath string
 	fetcher     ModuleFetcher
 	writer      ModuleWriter
