@@ -23,5 +23,5 @@ func TestModuleOutputIsProperlyFormatted(t *testing.T) {
 	}
 	outputString := formatModuleOutput(&module)
 
-	assert.Equal(t, "package1 (id1) - test module", outputString)
+	assert.Equal(t, "namespace1/package1/provider1:1.0.0 - test module", outputString)
 }

@@ -8,7 +8,12 @@ func printModuleToConsole(module *Module) {
 }
 
 func formatModuleOutput(module *Module) string {
-	return fmt.Sprintf("%s (%s) - %s", module.Name, module.ID, module.Description)
+	return fmt.Sprintf("%s/%s/%s:%s - %s",
+		module.Namespace,
+		module.Name,
+		module.Provider,
+		module.Version,
+		module.Description)
 }
 
 func printModuleInfo(module *Module) {
