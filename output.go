@@ -17,10 +17,18 @@ func formatModuleOutput(module *Module) string {
 }
 
 func printModuleInfo(module *Module) {
-	text := formatModuleInfo(module)
+	var text = formatModuleInfo(module)
 	fmt.Printf("%s\n", text)
 }
 
 func formatModuleInfo(module *Module) string {
-	return fmt.Sprintf("%s (%s)\n\n%s", module.Name, module.ID, module.Description)
+	title := fmt.Sprintf("%s/%s/%s", module.Namespace, module.Name, module.Provider)
+	return fmt.Sprintf(
+		"%s\n"+
+			"Namespace: %s\n"+
+			"Name: %s\n"+
+			"Provider: %s\n"+
+			"Version: %s\n"+
+			"Description: %s\n",
+		title, module.Namespace, module.Name, module.Provider, module.Version, module.Description)
 }
