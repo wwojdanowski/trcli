@@ -95,8 +95,12 @@ func loadModules(fileName string) []Module {
 // what about concurrent access?
 func (mc *ModulesCache) Find(packageName string) *Module {
 	modules := loadModules(mc.CacheFile())
+
+	makeSearchableName := func(module *Module) string {
+		return fmt.Sprintf("%s/%s/%s", module.Namespace, module.Name, module.Provider)
+	}
 	for i := 0; i < len(modules); i++ {
-		if packageName == modules[i].Name {
+		if packageName == makeSearchableName(&modules[i]) {
 			return &modules[i]
 		}
 	}

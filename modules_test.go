@@ -219,7 +219,7 @@ func TestItFindsExistingModule(t *testing.T) {
 		Verified:        true,
 	}
 
-	found := mc.Find("package1")
+	found := mc.Find("namespace1/package1/provider1")
 	assert.Equal(t, expected, *found)
 }
 
