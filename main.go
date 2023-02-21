@@ -66,7 +66,7 @@ func processInfoCommand(moduleName string) {
 		fmt.Printf("Module '%s' not found\n", moduleName)
 		return
 	}
-	printModuleInfo(module)
+	printModuleInfoToConsole(module)
 }
 
 func processUpdateCommand() {

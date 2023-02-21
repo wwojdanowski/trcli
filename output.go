@@ -16,7 +16,7 @@ func formatModuleOutput(module *Module) string {
 		module.Description)
 }
 
-func printModuleInfo(module *Module) {
+func printModuleInfoToConsole(module *Module) {
 	var text = formatModuleInfo(module)
 	fmt.Printf("%s\n", text)
 }
