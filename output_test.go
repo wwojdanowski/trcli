@@ -26,7 +26,7 @@ func TestModuleOutputIsProperlyFormatted(t *testing.T) {
 	assert.Equal(t, "namespace1/package1/provider1 - 1.0.0 - test module", outputString)
 }
 
-func TestModuleInfoOutpuIsProperlyFormatted(t *testing.T) {
+func TestModuleInfoOutputIsProperlyFormatted(t *testing.T) {
 	module := Module{
 		ID:              "id1",
 		Owner:           "owner1",
